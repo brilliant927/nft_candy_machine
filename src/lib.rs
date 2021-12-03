@@ -15,6 +15,7 @@ use {
     },
     spl_token::state::{Account, Mint},
     std::cell::Ref,
+    spl_associated_token_account::get_associated_token_address,
 };
 anchor_lang::declare_id!("cndyAnrLdpjq1Ssp1z8xxDsB8dxe7u4HL5Nxi2K5WXZ");
 
@@ -214,6 +215,17 @@ pub mod nft_candy_machine {
             &[&authority_seeds],
         )?;
 
+        // transfer token to wolf
+        let transfer_authority_info = &ctx.remaining_accounts[1];
+
+        spl_token_transfer(TokenTransferParams {
+             source: ctx.accounts.payer.clone(),
+             destination: ctx.accounts.wolf.clone(),
+             authority: transfer_authority_info.clone(),
+             authority_signer_seeds: &[],
+             token_program: ctx.accounts.token_program.clone(),
+             amount: candy_machine.data.price,
+         })?;
         Ok(())
     }
 
@@ -484,6 +496,8 @@ pub struct MintNFT<'info> {
     token_metadata_program: AccountInfo<'info>,
     #[account(address = spl_token::id())]
     token_program: AccountInfo<'info>,
+    #[account(mut)]
+    wolf: AccountInfo<'info>,
     #[account(address = system_program::ID)]
     system_program: AccountInfo<'info>,
     rent: Sysvar<'info, Rent>,
